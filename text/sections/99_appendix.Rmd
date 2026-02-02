@@ -41,7 +41,7 @@ d_a = |X_1| - |X_2|
 
 as a measure of decline. However, this estimator, too, will suffer from bias because $E(|X|)>|E(X)|$ when $X$ can be negative and there is variability in $X$. The more variability, the greater bias; hence, if $X_2$ is a more precise estimator than $X_1$---which would often be the case if $X_2$ arises from a replication or a meta-analysis---the decline effect will again be overestimated, and will not be 0 when the true decline effect is 0. One may also object to this definition of decline because extreme sign differences may not be picked up as problematic (i.e. from -1 to 1 is a large change, but the "decline" as the difference in absolute values is 0).
 
-Any useful definition of "decline" will likely be more complicated than simple arithmetic operations, and may depend on the scientific context.
+Any useful definition of "decline" will likely be more complicated than simple arithmetic operations, and may depend on the scientific context. Regardless of how decline is defined, I propose the following necessary condition: If a pair of published results (original/replication) would be defined as a decline, then the reversed pair (treating the replication as the original, and vice versa) should *not* indicate a decline. Sign-alignment can violate this simple rule.
 
 ### Bias in funnel plot meta-regression
 
