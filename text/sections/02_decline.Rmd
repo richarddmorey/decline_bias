@@ -1,0 +1,88 @@
+
+We now switch to a meta-scientific perspective. Suppose we ask the question: *do effect sizes tend to decrease from the initial to the replication?* Assume that for every initial report $Y_1$, we also have a report from a replication $Y_2$. In order to assess whether reported effects decline, we compare the numerical effect size in the report of $Y_1$ ($|X_1|$) with the numerical effect size in the report of $Y_2$ ($X_2sgn(X_1)$) to produce a "decline effect" $d_s$ (where the $s$ is for "sign" to indicate the effect has been aligned to the sign of the initial study):
+
+\begin{eqnarray*}
+d_s &=& Y_1 - Y_2\\
+&=&|X_1| - X_2sgn\,X_1
+\end{eqnarray*}
+
+
+If $d_s>0$, this is taken to mean that the effect size has "declined" to some extent from the initial study. Although I frame this section as comparing an initial study to a replication, my critique here applies to any comparison between two kinds of studies [e.g. observational vs. randomized control trials, @franklinBiasEvaluationBias2017]. 
+
+When both $X_1$ and $X_2$ have the same true mean $\mu$---that is, there is no true decline effect---will the expected decline effect $d_s$ be equal to 0? Surprisingly, no: The expected value of $d_s$ will *always* be larger than 0 under these circumstances. There is always an artifactual bias in the decline effect in precisely the direction that metascientists use as a signature.
+
+To see why, consider the situation where the true effect size $\mu$ is 0. The signs of the initial and replication will differ in 1/2 of cases. Anytime this occurs, $Y_1$ is positive and $Y_2$ is negative; hence, a decline is observed. When the signs agree (probability 1/2), the probability that $Y_1>Y_2$ is 1/2 (because they have the same mean). Thus, the probability of observing a decline in this scenario is 1/2 + 1/4 = 3/4, despite there being no decline effect.
+
+Figure \@ref(fig:bias1)A depicts the situation graphically for two true effect sizes. The figure shows the patterns of results that would lead to the identification of a decline effect. As can be seen, most of the space is occupied by "decline". When the true effect size is 0 and there is no decline ("a"), 3/4 of the bivariate distribution would count as a "decline". When the true effect size is larger ("b"), only about half the bivariate distribution would be in the "decline" region. 
+
+The key insight is that the sign alignment happens in one direction or the other with some probability: whether the result needs to be "coined" is itself random. Unless we have a specific *perspective* pinned down before the meta-analysis (e.g., $a_1$ or $a_2$), the perspective will thus be random.
+
+When there is no decline effect, the expected value of $d_s$ is $COV(X_1, sgn\, X_1)$ (proof in appendix), which will be a function of how far, in standard error units, $\mu$ is from 0. The amount of bias is shown in Figure \@ref(fig:bias1)A, as a function of the true effect size in standard errors of $X_1$. The larger the true effect (in either direction), the less probability of the observed sign differing from the true sign; hence the source of bias diminishes. 
+
+```{r bias1, fig.cap="A: Result combinations that would lead to a conclusion of ``decline'', if the error-prone sign of the first experiment determines the interpretation of the effect (shaded regions). Labels ``a'' and ``b'' denote two hypothetical bivariate effect size distributions with true effect sizes 0 and 1.5, respectively. See text for explanation. B: Amount of bias in the decline effect as a function of the noncentrality parameter $\\mu/\\sigma_1$ of the initial study."}
+
+ggplot() +
+  annotate(
+    "polygon",
+    x = c(Inf, Inf, 0, 0), y = c(Inf, -Inf, -Inf, 0),
+    fill = "burlywood3", alpha = .4
+  ) +
+  annotate(
+    "polygon",
+    x = c(-Inf, -Inf, 0, 0), y = c(-Inf, Inf, Inf, 0),
+    fill = "burlywood3", alpha = .4
+  ) +
+  annotate(
+    "text",
+    x = c(1.5, -1.5), y = c(-1.5, 1.5),
+    label = c(
+      "paste('Decline from ',X[1],' to ',X[2])",
+      "paste('Decline from |',X[1],'| to ', -X[2])"
+    ),
+    size = 2.5,
+    #hjust = .5,
+    color = "burlywood4", parse = TRUE
+  ) +
+  scale_x_continuous(
+    name = expression(paste("Initial ",X[1])),
+    limits = c(-3,3), expand = c(0,0)
+  ) +
+  scale_y_continuous(
+    name = expression(paste("Replication ",X[2])),
+    limits = c(-3,3), expand = c(0,0)
+  ) +
+  coord_fixed() +
+  geom_circle(
+    aes(x0 = 0, y0 = 0, r = c(1,2,3)/4),
+    color = "coral", inherit.aes=FALSE,
+    fill = "coral", alpha = .1
+  ) +
+  annotate(
+    "text",
+    x = c(-.55,2.15), y = c(-.75,2.35), label = c("a","b"),
+    color = c("coral","dodgerblue")
+  ) +
+    geom_circle(
+    aes(x0 = 1.5, y0 = 1.5, r = c(1,2,3)/4),
+    color = "dodgerblue", inherit.aes=FALSE,
+    fill = "dodgerblue", alpha = .1
+  ) +
+  
+  theme_minimal() -> gg_bias1
+
+tibble(
+  mu = seq(0,5,length.out = 256),
+  bias = exp_abs_x(mu,1) - (pnorm(0,mu,lower.tail = FALSE) * 2 - 1)*mu
+) |>
+  ggplot(
+    aes(x = mu, y = bias)
+  ) + 
+  geom_line(linewidth=3) +
+  ylab("Artifactual decline (SE units)") +
+  xlab(expression(paste("Noncentrality parameter |",mu/sigma[1],"|"))) +
+  theme_minimal() -> gg_bias2
+
+gg_bias1 + gg_bias2 + plot_annotation(tag_levels = 'A')
+  
+
+```

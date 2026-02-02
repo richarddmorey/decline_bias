@@ -1,0 +1,16 @@
+echo $SHELL 
+
+cd text/bib
+curl_output=$(curl --connect-timeout 5 -o bibfile.raw.bib "http://127.0.0.1:23119/better-bibtex/export/library?/2/library.bibtex")
+if [ $? -eq 0 ]; then
+  #iconv -f CP1252 -t UTF-8 bibfile.raw.bib > bibfile.bib
+  cp bibfile.raw.bib bibfile.bib
+fi
+
+cd ../..
+
+cd text/apa_paper/
+
+Rscript -e "rmarkdown::render('apa_paper.Rmd')" 
+
+type afplay &> /dev/null && afplay /System/Library/Sounds/Hero.aiff || echo "Done."

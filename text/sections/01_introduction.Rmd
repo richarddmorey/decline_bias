@@ -1,0 +1,87 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+Because scientists often cannot directly observe a whole system, they often make inferences from phenomena that are deemed signatures of some underlying cause: morphological similarities for descent from a common ancestor [@darwinOriginSpeciesMeans1859], cosmic microwave background radiation for the Big Bang [@dickeCosmicBlackBodyRadiation1965], or additivity in response times for serial cognitive processing [@sternbergDiscoveringMentalProcessing1998]. Signatures are consequences of particular ways that a system might work. 
+
+A weakness of using signatures, however, is that purported signatures may be observed for reasons other than the putative cause. The worst possible way this could go wrong is if there is an *artifactual* reason for the signature: one due merely to the manner in which a phenomenon is studied. 
+
+Statistical metascience is built on signatures that are used to infer issues in scientific behaviour. For instance, the observation that effect sizes appear to diminish over time after an initial discovery---called the "decline effect" [@protzkoDeclineEffectsTypes2017]---is taken as a signature of poor scientific behavior (either individual or systemic). @pietschnigEffectDeclinesAre2019 say that
+
+> "We show in the present meta-meta-analysis evidence for overproportional...and stronger effect declines than increases in the published intelligence literature. Effect misestimations are most likely due to low initial study power and strategic research and submission behaviors of exploratory researchers and replicators alike." (p. 12)
+
+\noindent They suggest reforms meant to ameliorate the problems they infer.
+
+I will show that such signatures can arise as an artifact of the meta-analytic study of such effects. Seemingly paradoxically, I will show that biased estimates of meta-analytic quantities can arise from unbiased estimates of effect sizes, without any poor behaviour (assuming the most basic statistical model for the outcomes, every study published, and no opportunistic reporting). I will then suggest a resolution of the meta-analytical paradox, proposing that it arises from the stripping of away of the research context in a way that is central to the meta-scientific perspective.
+
+## Meta-analytic "coining"
+
+"Coining" is the practice of aligning effect sizes by their observed  for interpretability. For instance, @ioannidisWhyMostDiscovered2008 (Figure 2, p. 65) demonstrated how selection for significance can lead to a relationship between effect size and sample size. He first aligned all observed effect sizes so they were positive.
+
+Coining is also used in the study of decline effects. In this context, the sign of the effect of an initial study (the earliest one in the set, often the first to report the effect in question) is flipped to be positive, and then all subsequent studies are re-aligned to be consistent with that direction [e.g. @fanelliMetaassessmentBiasScience2017, @gongAreEffectSizes2019, @nuijtenEffectSizesPower2020, @pietschnigEffectDeclinesAre2019]. For instance, @fanelliMetaassessmentBiasScience2017 report in their methods that:
+
+> "Each dataset was standardized following previously established protocols (14). Moreover we inverted the sign of (i.e., multiplied by -1) all primary studies within meta-analyses whose pooled summary estimates were smaller than zero---a process known as `coining.'\%
+> " (p. 3719)
+
+Coining appears to be standard practice in metascience, and may not be explicitly called "coining". For instance, @OpenScienceCollaboration:2015 reported that 
+> "To be able to compare and analyze correlations across study-pairs, the original study’s effect size was coded as positive; the replication study’s effect size was coded as negative if the replication study’s effect was opposite to that of the original study." (p. aac4716-3)
+
+\noindent and reported a "substantial decline" (p. 943) in effect sizes from original to replication [see also e.g. @camererEvaluatingReplicabilitySocial2018, @erringtonInvestigatingReplicabilityPreclinical2021].
+
+In the study of decline effects, coining is used to yield an common definition of decline across studies: a "decline" is when the coined effect size becomes less positive. Otherwise, a decline of a positive effect (e.g. moving from 1 to .5) might be cancelled by decline of a negative effect (e.g. moving from -1 to -.5). Coining aligns the signs across all studies so that many research areas can be studied simultaneously, drawing far-reaching conclusions across science.
+
+
+## Data-dependent reporting practices
+
+Consider any research context in which there two possible outcomes that can be supported, and these outcomes are symmetric in the sense that neither outcome is inherently favored from a reporting perspective. Gender or sex differences are a common example; one could report a result as favoring men or women. 
+
+There are different ways to choose how to report a difference in such contexts. If the research is confirmatory or following up on previous studies that showed a similar effect, one might choose the to align a pre-registration or a previously reported effect. For instance, if we predicted that women would score higher on a particular inventory than men, then when the opposite is observed we might report a negative effect size. Likewise, if we have a theoretical reason to expect one direction or another, we might choose to report from the perspective of the theory.
+
+But what about novel effects? Another choice is simply to report the effect from the perspective of the group that scored the highest, i.e. that makes the difference positive. @johfreReconsideringReferenceCategory2021 explicitly recommend "relying on the values of the [differences] to make a decision [on the reference category]. Given that positive numbers are cognitively simpler than negative values, the reference category can be chosen such that the presented coefficients are positive." Given that this will have no effect on inferential statistics, a data-driven approach is a reasonable choice.
+
+<!---@ ramseyExaminingScienceCapital2025 explicitly does this based on their recommendation.--->
+
+I call reporting practices based on outcomes "data-driven reporting practices" (DRPs). Note that these are not the same as hypothesizing after the results are known (indeed, they may be agnostic to any hypothesis) or cherry picking. Data-driven reports are perfectly transparent with respect to the data; they simply choose a *reporting perspective* based on the outcome. There is nothing questionable about such reporting *per se*.
+
+The practice of coining in meta-analysis is equivalent to re-aligning effect sizes as if the original authors had used DRP, and then subsequent authors had reported their effect sizes in line with the original study. As a shorthand for both this particular DRP and the meta-analytic practice of coining, I will use the term "sign alignment". For the purpose of this paper, it does not matter *who* does it; I will explore its effects on meta-analysis.
+
+### Statistical assumptions
+
+For shorthand, call the experimental context $A$ and the two outcomes/perspectives $a_1$ and $a_2$ (e.g., $A$ might be "response time in a visual search task" and $a_1$ might be "women/women were faster on average" and $a_2$ "men/men were faster on average"). Of course, there is a difference between the perspective and the outcome; which I am referring to will be clear from context. 
+
+Any experimental outcome $X_i$ ($i=1$ an initial study, and $i=2,\ldots$ for replications) is an unbiased estimate of estimate of some underlying true effect size $\mu$ with normal error:
+\[
+X_i \sim Normal(\mu, \sigma_i)
+\]
+where $\sigma_i$ is the standard error or estimate $X_i$. To begin, we assume that there will be one replication, that the initial and replication outcomes are statistically independent of one another, that both the initial study and the replication will be reported, and have the same true mean. Arbitrarily, we assume that $\mu$ is the effect size when $a_1$ is taken as the research perspective (correspondingly, $-\mu$ is the effect size when $a_2$ is taken as the research perspective).
+
+We assume that all results are "coined" after being observed. Equivalently, 1) all initial studies report their findings by stating the effect size from the perspective that was favored by the data, and 2) replications will adopt the perspective of the initial study. The initial effect size reported will thus always be positive. 
+
+Let us call the coined result $Y_i$, which can be thought of as a pair of numbers.[^y] For reports from initial studies $Y_1$, 
+
+[^y]: In a slight abuse of notation, when I refer to $Y_i$ by itself in mathematical formulae, assume that it is shorthand for the first number: the reported, sign-aligned effect size.
+
+$$
+Y_1 = \left\{%
+\begin{array}{ll}% 
+(|X_1|, a_1)& \text{if} X_1>0\\%
+(|X_1|, a_2)& \text{if} X_1<0%
+\end{array}\right.
+$$
+and for replications (where $i>1$),
+
+$$
+Y_i = \left\{%
+\begin{array}{ll}% 
+(X_2sgn(X_1), a_1)& \text{if} X_1>0,i>1\\%
+(X_2sgn(X_1), a_2)& \text{if} X_1<0,i>1%
+\end{array}\right.
+$$
+where $sgn\, x$ is the sign function that returns -1 when $x<0$ and 1 when $x>0$ (ignoring for simplicity the zero probability event that an experimental result is exactly 0). 
+
+Whenever $X_1$ and $X_2$ disagree in sign, the effect sizes in $Y_1$ and $Y_2$ will also disagree in sign. The difference between the results $X_1,X_2$ and reported results $Y_1,Y_2$ are that $Y_1,Y_2$ have been "aligned" to the outcome of the initial study. 
+
+It is obvious that we can obtain an unbiased estimate of $\mu$ by reversing the sign of the effect size report in $Y_i$ when $a_2$ is reported, then taking the average with all the reports where $a_1$ is reported. An estimate of $-\mu$ (the effect from the opposite perspective) could found in the same way. There is nothing defective about the DRP from the perspective of estimating the underlying effect size, as long as one takes care to understand the perspective that each study takes.
+

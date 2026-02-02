@@ -1,0 +1,76 @@
+---
+title             : "Decline effects, statistical artifacts, and a meta-analytic paradox"
+shorttitle        : "Meta-analysis artifacts"
+
+author: 
+  - name          : "Richard D. Morey"
+    affiliation   : "1"
+    corresponding : yes    # Define only one corresponding author
+    address       : "70 Park Place"
+    email         : "moreyr@cardiff.ac.uk"
+    role: # Contributorship roles (e.g., CRediT, https://credit.niso.org/)
+      - "Conceptualization"
+      - "Writing - Original Draft Preparation"
+      - "Writing - Review & Editing"
+
+affiliation:
+  - id            : "1"
+    institution   : "Cardiff University"
+
+authornote: |
+
+  This draft was compiled `r format(Sys.time(),"%A %d %b %Y at %H:%M:%S %Z")`.
+
+abstract: |
+  The decline effect (Protzko & Schooler, 2017) is an observed phenomenon where
+  effect sizes in experiments apparently diminish in size from the first paper
+  demonstrating the effect to later replications. This has been taken as a 
+  symptom of an unhealthy scientific ecosystem, possibly caused by the "winner's
+  curse" (selection on significance and regression to the mean), publication 
+  bias or opportunistic analyses. I show that decline effects can arise as an 
+  artifact from a much simpler source: the original article determining the sign
+  of the effect in a meta-analysis. Moreover, such artifactual decline effects 
+  will show correlations with some of the same experimental properties that one 
+  would expect from biases from poor behavior, such as the sample size of the 
+  original study.
+
+keywords          : "decline effect"
+wordcount         : "X"
+
+bibliography      : "../bib/bibfile.bib"
+
+floatsintext      : yes
+linenumbers       : yes
+draft             : yes
+mask              : no
+
+figurelist        : no
+tablelist         : no
+footnotelist      : no
+
+classoption       : "man"
+output            : papaja::apa6_pdf
+---
+
+```{r setup, include = FALSE}
+library("papaja")
+```
+
+```{r analysis-preferences}
+# Seed for random number generation
+set.seed(246)
+knitr::opts_chunk$set(cache.extra = knitr::rand_seed)
+```
+
+
+
+```{r child='../sections/00_structure.Rmd'}
+```
+
+
+\newpage
+
+# References
+
+::: {#refs custom-style="Bibliography"}
+:::

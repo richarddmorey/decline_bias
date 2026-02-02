@@ -1,0 +1,715 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r sim1_setup}
+M = 5000
+mean_mu = 0
+sd_mu   = .2
+num_replications = 3
+n_initial_min = 10
+n_initial_max = 100
+n_replication_factor = 4
+```
+
+In this section we continue using our simple two-experiment (initial/replication) setup, but we will vary the sample sizes and true effect sizes. I give details about the simulation setup in the Appendix; here, I give an abbreviated version that is enough to understand the simulations without burdening the reader with too much formal information. 
+
+Each simulated experiment is assumed to have two independent groups whose mean difference will be the effect size of interest. For simplicity, the true variance of each group is known to be 1; we can thus treat the mean difference as a standardized effect size. In the initial study, the sample size in the two groups are equal and drawn from the distribution shown in Figure \@ref(fig:simsummary)A. For the replication, the sample sizes in the groups were assumed to be `r n_replication_factor` times larger than in the initial study. The true effect sizes for each pair of initial study and replication were assumed equal, drawn from the distribution shown in Figure \@ref(fig:simsummary)B. 
+
+For each of the $2$ (initial/replication) $\times`r M`$ simulated studies, an observed difference ($X$) was drawn assuming normal error. These differences were then coined to produce sign-aligned effect sizes ($Y$). The simulation's original/replication simulation setup is similar to the setup of @OpenScienceCollaboration:2015.
+
+In the simulations that follow, for each statistic I show that there is no bias if $X$ is considered; however, using $Y$ in place of $X$ will artifactually yield meta-scientific signatures of poor scientific behaviour.
+
+```{r}
+expand.grid(
+  i = 1:num_replications,
+  mu = rnorm(M, mean_mu, sd_mu)
+) |>
+  mutate(
+    sim_num = rep(1:M, each = num_replications),
+    N = rep(
+        # sqrt to provide a more smaller sample sizes than larger
+        runif(M, sqrt(n_initial_min-.5), sqrt(n_initial_max+.5))^2 |>
+          round(),
+      each = num_replications
+    ),
+    N = if_else(i == 1, N, N * n_replication_factor),
+    N_effective = N / 2,
+    std_err = 1/sqrt(N_effective),
+    X = rnorm(n(), mu, std_err)
+  ) |>
+  group_by(sim_num) |>
+  mutate(
+    Y = if_else(
+      i == 1, abs(X), X * first(sign(X))
+    )
+  ) |>
+  ungroup() -> sim
+```
+
+```{r simsummary,fig.cap="Distributions from which initial per-group sample sizes (A) and true effect sizes (B) were drawn for the reported simulations. All samples were independent."}
+tibble(
+  bin_n = n_initial_min:n_initial_max,
+  bin_min = sqrt(n_initial_min:n_initial_max - .5),
+  bin_max = sqrt(n_initial_min:n_initial_max + .5)
+) |>
+  mutate(
+    bin_prob = (bin_max - bin_min) / (sqrt(n_initial_max+.5) - sqrt(n_initial_min-.5))
+  ) |>
+  ggplot(aes(x=bin_n,y=bin_prob)) +
+  geom_point() +
+  geom_segment(aes(xend=bin_n,yend=0)) +
+  scale_x_continuous(
+    name = "Initial sample size (per group)",
+    limits = c(0,n_initial_max),
+    breaks = seq(0,n_initial_max,10)
+  ) +
+  ylab("Probability") +
+  theme_minimal() +
+  theme(
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    axis.text.y = element_blank()
+  ) -> gg_sim_n
+
+tibble(
+  x = seq(-1, 1, length.out = 1024),
+  y = dnorm(x, mean_mu, sd_mu)
+) |>  
+ggplot() +
+  geom_ribbon(
+    aes(x = x, ymin = 0, ymax = y)
+  ) +
+  xlim(c(-1,1)) +
+  ylab("Density") +
+  xlab("True effect size") +
+  annotate(
+    "label",
+    y = Inf, x = Inf, vjust=1.1, hjust = 1.1,
+    label = glue::glue('paste("Normal({mean_mu}, ",{sd_mu}^2,")")'),
+    parse=TRUE
+  ) +
+  theme_minimal() +
+  theme(
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    axis.text.y = element_blank()
+  ) -> gg_sim_es
+
+(gg_sim_n / gg_sim_es) + plot_annotation(tag_levels = "A")
+
+```
+
+
+## Relationship between effect size and sample size
+
+A relationship between effect size and sample size is often cited as evidence for publication bias; for example, @stanleyWhatMetaanalysesReveal2018 cited such a correlation as part of the "quite clear" evidence for publication bias, because "inverse correlation between the magnitude of the effect size and sample size would be expected when there is selective reporting for statistical significance" (p. 1328). @ioannidisWhyMostDiscovered2008 purported to demonstrate the effects of publication bias by showing a relationship between effect size and total sample size in a set of meta-analyses. Likewise, the logic of funnel plots and meta-regression techniques such as Egger's regression and PET-PEESE depend on finding such relationships.
+
+Figure \@ref(fig:effbyn1)A shows the relationship between the initial effect size $X_{1j}$ and the sample size in the `r M` simulations. By design, these were sampled to be independent, so there is no relationship between them. Figure \@ref(fig:effbyn1)B, however, shows that once the results are sign-aligned, the relationship appears. Although @ioannidisWhyMostDiscovered2008 intended to show that selection on statistical significance would show this effect, he would have seen the same effect even had he not selected on significance simply due to his explicit coining of the effect sizes.
+
+```{r effbyn1, fig.cap="Relationship between the initial observed effect sizes and initial sample sizes for (A) non-sign-aligned results and (B) sign-aligned results. Each point is a single simulated initial result. The thick line in each plot shows the LOESS nonparametric regression curve."}
+sim |>
+  filter(i == 1) |>
+  ggplot(aes(y = X, x = N)) +
+  geom_point(alpha = .1) +
+  geom_smooth(
+    method = "loess", se=FALSE,
+    color = 'dodgerblue',
+    linewidth = 5,
+    lineend = "round"
+  ) +
+  geom_hline(
+    yintercept = 0,
+    linetype = "dashed"
+  ) +
+  scale_x_continuous(
+    name = 'Sample size per group',
+    transform = 'log10'
+  ) +
+  ylab("Effect size") +
+  ggpubr::stat_cor(
+    #mapping = aes(colour = NULL),
+    method = "pearson", 
+    mapping = aes(label=after_stat(r.label)),
+    cor.coef.name = "r",
+    label.x.npc = "right",
+    hjust = 1.1
+  ) +
+  ylim(range(sim[,c("X","Y")])) +
+  theme_minimal() -> gg_es_n1
+
+sim |>
+  filter(i == 1) |>
+  ggplot(aes(y = Y, x = N)) +
+  geom_point(alpha = .1) +
+  geom_smooth(
+    method = "loess", se=FALSE,
+    color = 'coral',
+    linewidth = 5,
+    lineend = "round"
+  ) +
+  geom_hline(
+    yintercept = 0,
+    linetype = "dashed"
+  ) +
+  scale_x_continuous(
+    name = 'Sample size per group',
+    transform = 'log10'
+  ) +
+  ylab("Effect size (coined)") +
+  ggpubr::stat_cor(
+    #mapping = aes(colour = NULL),
+    method = "pearson", 
+    mapping = aes(label=after_stat(r.label)),
+    cor.coef.name = "r",
+    label.x.npc = "right",
+    hjust = 1.1
+  ) +
+  ylim(range(sim[,c("X","Y")])) +
+  theme_minimal()  -> gg_es_n2
+
+gg_es_n1 + gg_es_n2 + plot_annotation(tag_levels = 'A')
+
+```
+
+## Decline effects
+
+To demonstrate the effect of sign-alignment on estimates of the decline effect, I computed the difference between the initial and replication estimates $X_{1j}-X_{2j}$ (unaligned) or $Y_{1j}-Y_{2j}$ (sign-aligned).
+
+Figure \@ref(fig:simdecline1)A shows the unaligned differences. Because these simulated results have the same mean, as expected, the average difference is 0. However, as Figure \@ref(fig:simdecline1)B shows, when the results are sign aligned, the results show artifactual decline effects. Although there is no true decline effect in any simulation, the apparent decline effect is large: on average, the effect sizes "decline" by over 50%.
+
+```{r simdecline1,fig.cap="Initial and replication estimates without sign-alignment (A; $X_{1j}$ and $X_{2j}$) and with sign-alignment (B; $Y_{1j}$ and $Y_{2j}$). Each thin black line shows a single simulation. The thick line in each graph shows the average."}
+sim |>
+  filter(i <= 2) |>
+  mutate(i = if_else(i == 1, "Initial", "Replication")) |>
+  ggplot(aes(x = i, y = X, group = sim_num)) +
+  geom_line(alpha = .05) +
+  annotate(
+    "line",
+    y = sim |> group_by(i) |> summarise(X = mean(X)) |> filter(i<3) |> pull(X),
+    x = 1:2,
+    color = 'dodgerblue',
+    linewidth = 3
+    ) +
+  annotate(
+    "point",
+    y = sim |> group_by(i) |> summarise(X = mean(X)) |> filter(i<3) |> pull(X),
+    x = 1:2,
+    color = 'dodgerblue',
+    size = 5, shape = 19
+  ) +
+  scale_x_discrete(
+    name = "Result",
+    expand = c(.05,.05)
+  ) +
+  scale_y_continuous(
+    name = "Estimate (unaligned)",
+    limits = range(c(sim$X,sim$Y))
+  ) +
+  theme_minimal() -> gg_sim1_x
+
+sim |>
+  filter(i <= 2) |>
+  mutate(i = if_else(i == 1, "Initial", "Replication")) |>
+  ggplot(aes(x = i, y = Y, group = sim_num)) +
+  geom_line(alpha = .05) +
+  annotate(
+    "line",
+    y = sim |> group_by(i) |> summarise(Y = mean(Y)) |> filter(i<3) |> pull(Y),
+    x = 1:2,
+    color = 'coral',
+    linewidth = 3
+  ) +
+  annotate(
+    "point",
+    y = sim |> group_by(i) |> summarise(Y = mean(Y)) |> filter(i<3) |> pull(Y),
+    x = 1:2,
+    color = 'coral',
+    size = 5, shape = 19
+  ) +
+  scale_x_discrete(
+    name = "Result",
+    expand = c(.05,.05)
+    ) +
+  scale_y_continuous(
+    name = "Estimate (sign aligned)",
+    limits = range(c(sim$X,sim$Y))
+  ) +
+  theme_minimal() -> gg_sim1_y
+
+gg_sim1_x + gg_sim1_y + plot_annotation(tag_levels = 'A')
+```
+
+### Correlation between decline effect and sample size
+
+Meta-analysts look for relationships between decline effects and other properties of initial papers to understand "risk factors" for bias in literatures. For instance, @pietschnigEffectDeclinesAre2019 report that "[e]ffect misestimations were more substantial when initial studies had smaller sample sizes and reported larger effects, thus indicating suboptimal initial study power as the main driver of effect misestimations in initial studies" (p. 1). 
+
+Relationships between decline effects either initial effect sizes or sample sizes can be explained artifactually. A relationship between initial effect size and both unaligned or aligned decline is explainable by simple regression to the mean. Figure \@ref(fig:simcores1)A and B show this relationship in the simulated data. We replicate the strong relationship @pietschnigEffectDeclinesAre2019 with initial effect size without any difference between initial and replication true effect sizes. This has relationship has nothing to do with "suboptimal initial study power"; it is a mere statistical artifact.
+
+```{r simcores1, fig.cap="Correlation between initial effect size and the difference/decline from initial to replication study in unaligned (A) and sign-aligned (B) results. Each point is the result of a single simulation. The thick line in each plot is a LOESS nonparametric regression curve."}
+
+sim |>
+  filter(i < 3) |>
+  group_by(sim_num) |>
+  mutate(
+    ds = first(Y) - Y,
+    ds = ds[i==2],
+    d = first(X) - X,
+    d = d[i==2],
+  ) |>
+  ungroup() %>% {
+    c(.$ds,.$d)
+  } |>
+  range() |> 
+  max() -> range_cor
+
+range_cor = range_cor * c(-1,1)
+
+# Correlation with initial effect size
+sim |>
+  filter(i < 3) |>
+  group_by(sim_num) |>
+  mutate(
+    d = first(X) - X,
+    d = d[i==2],
+    X1 = first(X)
+  ) |>
+  filter(i == 1) |>
+  ggplot(aes(x = X1, y = d)) +
+  geom_point(alpha = .1) +
+  ggpubr::stat_cor(
+    #mapping = aes(colour = NULL),
+    method = "pearson", 
+    mapping = aes(label=after_stat(r.label)),
+    cor.coef.name = "r",
+    label.x.npc = "right",
+    hjust = 1.1
+  ) +
+  geom_smooth(
+    method = "loess", se=FALSE,
+    color = 'dodgerblue',
+    linewidth = 5,
+    lineend = "round"
+  ) +
+  geom_hline(
+    yintercept = 0,
+    linetype = 'dashed'
+  ) +
+  scale_y_continuous(
+    name = 'Difference',
+    limits = range_cor
+  ) +
+  scale_x_continuous(
+    name = "Initial effect size (unaligned)"
+  ) +
+  theme_minimal() -> gg_cor_es_initial1
+
+# Correlation with initial sample size
+sim |>
+  filter(i < 3) |>
+  group_by(sim_num) |>
+  mutate(
+    ds = first(Y) - Y,
+    ds = ds[i==2],
+    Y1 = first(Y)
+  ) |>
+  filter(i == 1) |>
+  ggplot(aes(x = Y1, y = ds)) +
+  geom_point(alpha = .1) +
+  ggpubr::stat_cor(
+    #mapping = aes(colour = NULL),
+    method = "pearson", 
+    mapping = aes(label=after_stat(r.label)),
+    cor.coef.name = "r",
+    label.x.npc = "right",
+    hjust = 1.1
+  ) +
+  geom_smooth(
+    method = "loess", se=FALSE,
+    color = 'coral',
+    linewidth = 5,
+    lineend = "round"
+  ) +
+  geom_hline(
+    yintercept = 0,
+    linetype = 'dashed'
+  ) +
+  scale_y_continuous(
+    name = 'Decline',
+    limits = range_cor
+  ) +
+  scale_x_continuous(
+    name = "Initial effect size (sign aligned)"
+  ) +
+  theme_minimal() -> gg_cor_es_initial2
+  
+gg_cor_es_initial1 + gg_cor_es_initial2 + plot_annotation(tag_levels = 'A')
+
+```
+
+Relationships between initial sample size and the decline effect can be equally attributed to a statistical artifact, but the cause is somewhat subtler. As Figure \@ref(fig:simcorn1)A shows, no such relationship is apparent in the simulated data before sign-alignment; indeed, the data were simulated in such a way that these quantities were independent. However, Figure \@ref(fig:simcorn1)B shows that after sign alignment, the relationship hypothesized and reported by @pietschnigEffectDeclinesAre2019 appears. This artifactual relationship can be attributed to the fact that that the bias in computing the decline effect is a decreasing function of the noncentrality parameter (the effect size in standard error units), and the noncentrality parameter is larger when $N$ is larger. 
+
+
+```{r simcorn1, fig.cap="Correlation between sample size and the difference/decline from initial to replication study in unaligned (A) and sign-aligned (B) results. Each point is the result of a single simulation. The thick line in each plot is a LOESS nonparametric regression curve."}
+
+# Theoretical decline bias
+sim |>
+  filter(i == 1) |>
+  mutate(
+    decline_bias = exp_abs_x(mu, std_err) - mu * (2*pnorm(0,-mu,std_err)-1)
+  ) |>
+  summarise(
+    decline_bias = mean(decline_bias)
+  )
+
+# Simulated decline bias
+sim |>
+  filter(i < 3) |>
+  group_by(sim_num) |>
+  mutate(ds = first(Y) - Y) |>
+  filter(i == 2) |>
+  ungroup() |>
+  summarise(
+    ds = mean(ds)
+  )
+
+sim |>
+  filter(i < 3) |>
+  group_by(sim_num) |>
+  mutate(
+    ds = first(Y) - Y,
+    ds = ds[i==2],
+    d = first(X) - X,
+    d = d[i==2],
+  ) |>
+  ungroup() %>% {
+    c(.$ds,.$d)
+  } |>
+  range() |> 
+  max() -> range_cor
+
+range_cor = range_cor * c(-1,1)
+
+# Correlation with initial sample size
+sim |>
+  filter(i < 3) |>
+  group_by(sim_num) |>
+  mutate(
+    d = first(X) - X,
+    d = d[i==2]
+  ) |>
+  filter(i == 1) |>
+  ggplot(aes(x = N, y = d)) +
+  geom_point(alpha = .1) +
+  ggpubr::stat_cor(
+    #mapping = aes(colour = NULL),
+    method = "pearson", 
+    mapping = aes(label=after_stat(r.label)),
+    cor.coef.name = "r",
+    label.x.npc = "right",
+    hjust = 1.1
+  ) +
+  geom_smooth(
+    method = "loess", se=FALSE,
+    color = 'dodgerblue',
+    linewidth = 5,
+    lineend = "round"
+  ) +
+  geom_hline(
+    yintercept = 0,
+    linetype = 'dashed'
+  ) +
+  xlab("Sample size per group") +
+  scale_y_continuous(
+    name = 'Difference (unbiased)',
+    limits = range_cor
+  ) +
+  scale_x_continuous(
+    transform = "log10"
+  ) +
+  theme_minimal() -> gg_cor_n_initial1
+
+# Correlation with initial sample size
+sim |>
+  filter(i < 3) |>
+  group_by(sim_num) |>
+  mutate(
+    ds = first(Y) - Y,
+    ds = ds[i==2]
+  ) |>
+  filter(i == 1) |>
+  ggplot(aes(x = N, y = ds)) +
+  geom_point(alpha = .1) +
+  ggpubr::stat_cor(
+    #mapping = aes(colour = NULL),
+    method = "pearson", 
+    mapping = aes(label=after_stat(r.label)),
+    cor.coef.name = "r",
+    label.x.npc = "right",
+    hjust = 1.1
+  ) +
+  geom_smooth(
+    method = "loess", se=FALSE,
+    color = 'coral',
+    linewidth = 5,
+    lineend = "round"
+  ) +
+  geom_hline(
+    yintercept = 0,
+    linetype = 'dashed'
+  ) +
+  xlab("Sample size per group") +
+  scale_y_continuous(
+    name = 'Decline (biased)',
+    limits = range_cor
+  ) +
+  scale_x_continuous(
+    transform = "log10"
+  ) +
+  theme_minimal() -> gg_cor_n_initial2
+  
+gg_cor_n_initial1 + gg_cor_n_initial2 + plot_annotation(tag_levels = 'A')
+
+```
+
+## Asymmetric funnel plots
+
+As previously demonstrated, sign-alignment is expected to have the effect of biasing funnel plots to 1) be asymmetric, and 2) have $x$-intercepts away from the true effect size even in the absence of publication bias. 
+
+For the purposes of simulating funnel plots, I added a second simulated replication ($X_{3j}$) of the same size as the first replication to prevent the meta-regressions from being trivial (only consisting of two points). For visualization purposes, instead of showing the individual points, I show the meta-regression line for each simulation, along with the average meta-regression line.
+
+Meta-regression lines were built from least squares estimates for the model:
+\[
+X_{ij} = b_{0j} + b_{1j}s_{ij}
+\]
+where $s_{ij}$ is the standard error for the $i$th study ($i=1,2,3$) in the $j$th simulation. Sign-aligned meta-regressions were obtained through corresponding meta-regressions for $Y_{ij}$. For the purposes of this simple example, weighting the points by precision is unnecessary.
+
+Figure \@ref(fig:funnelbiased2)A shows the meta-regression lines of standard error onto observed effect size for the unaligned data points ($X_{ij}, j=1,2,3$). On average, the funnels are symmetric and have an $x$-intercept of 0, which is the average effect size in the data.
+
+Figure \@ref(fig:funnelbiased2)B shows the corresponding meta-regression lines for the sign-aligned data. The lines are, on average, skewed to have negative slopes. The average $x$-intercept is not 0, but is instead less than 0. As is clear from the previous discussion (particularly Figure \@ref(fig:funnelbiasexpl)), this $x$-intercept is a function of the true average effect size and the standard errors of the replications; it could be shifted right or left by changing the relationship between the initial and replication standard errors.
+
+```{r funnelbiased2,fig.cap="Meta-regression lines for each of the simulations using the non-sign-aligned data (A) or sign-aligned data (B)."}
+
+sim %>%
+  split(.$sim_num) |>
+  purrr::map_df(\(df){
+    lm(X ~ std_err, data = df) |>
+      broom::tidy() |>
+      mutate(sim_num = df$sim_num[1])
+  }, .progress=interactive()) |>
+  relocate(sim_num, .before = everything()) |>
+  mutate(term = if_else(term=="(Intercept)", "intercept", "slope")) |>
+  select(sim_num, term, estimate) |>
+  tidyr::pivot_wider(
+    id_cols = sim_num,
+    names_from = "term",
+    values_from = "estimate"
+  ) -> sim_funnel_X
+
+sim %>%
+  split(.$sim_num) |>
+  purrr::map_df(\(df){
+    lm(Y ~ std_err, data = df) |>
+      broom::tidy() |>
+      mutate(sim_num = df$sim_num[1])
+  }, .progress=interactive()) |>
+  relocate(sim_num, .before = everything()) |>
+  mutate(term = if_else(term=="(Intercept)", "intercept", "slope")) |>
+  select(sim_num, term, estimate) |>
+  tidyr::pivot_wider(
+    id_cols = sim_num,
+    names_from = "term",
+    values_from = "estimate"
+  ) -> sim_funnel_Y
+
+
+sim |>
+  ggplot(aes(x = std_err, y = X, group = sim_num)) +
+  stat_smooth(
+    geom = "line",
+    method = "lm",
+    alpha = 0.05,
+    fullrange = TRUE
+  ) +
+  annotate(
+    "segment",
+    x = 0,
+    y = mean(sim_funnel_X$intercept),
+    xend = max(sim$std_err),
+    yend = max(sim$std_err)*mean(sim_funnel_X$slope) + mean(sim_funnel_X$intercept),
+    color = 'dodgerblue',
+    linewidth=5,
+    lineend = 'round'
+  ) +
+  scale_y_continuous(
+    name = "Effect size (unaligned)",
+    limits = range(c(sim$Y,sim$X)),
+    expand = c(0,0)
+  ) +
+  scale_x_reverse(,
+    name = "Standard error",
+    limits = c(0,max(sim$std_err)),
+    expand = c(0,0)
+  ) +
+  coord_flip() +
+  theme_minimal() -> gg_funnel_bias1
+
+sim |>
+  ggplot(aes(x = std_err, y = Y, group = sim_num)) +
+  stat_smooth(
+    geom = "line",
+    method = "lm",
+    alpha = 0.05,
+    fullrange = TRUE
+  ) +
+  annotate(
+    "segment",
+    x = 0,
+    y = mean(sim_funnel_Y$intercept),
+    xend = max(sim$std_err),
+    yend = max(sim$std_err)*mean(sim_funnel_Y$slope) + mean(sim_funnel_Y$intercept),
+    color = 'coral',
+    linewidth=5,
+    lineend = 'round'
+  ) +
+  scale_y_continuous(
+    name = "Effect size (sign aligned)",
+    limits = range(c(sim$Y,sim$X)),
+    expand = c(0,0)
+  ) +
+  scale_x_reverse(
+    name = "Standard error",
+    limits = c(0,max(sim$std_err)),
+    expand = c(0,0)
+  ) +
+  coord_flip() +
+  theme_minimal() -> gg_funnel_bias2
+
+
+(gg_funnel_bias1 / gg_funnel_bias2) + plot_annotation(tag_levels = 'A')
+
+```
+
+```{r correctionbiased1,fig.cap="Caption",include=FALSE}
+
+sim |>
+  mutate(
+    mu_corrected = sign(X)*sign(Y)*mu
+  ) |>
+  left_join(
+    sim_funnel_Y |> select(-slope), by = "sim_num"
+  ) |>
+  rename(
+    es_funnel_corrected_biased = intercept
+  ) |>
+  left_join(
+    sim_funnel_X |> select(-slope), by = "sim_num"
+  ) |>
+  rename(
+    es_funnel_corrected = intercept
+  ) -> sim_funnel_correction
+
+sim_funnel_correction |>
+  ggplot(aes(x = mu, y = es_funnel_corrected)) +
+  geom_point(alpha = .05) +
+  geom_smooth(method='lm', se=FALSE,color = 'dodgerblue',linewidth=5,lineend='round') +
+  geom_abline(
+    slope = 1,
+    intercept = 0,
+    linetype = 'dashed'
+  ) + 
+  coord_equal() +
+  ylab("Funnel-corrected ES") +
+  xlab("True ES") +
+  ylim(
+    range(sim_funnel_correction[,c("es_funnel_corrected","es_funnel_corrected_biased")])
+  ) +
+  theme_minimal() -> gg_funnel_cor1
+
+
+sim_funnel_correction |>
+  ggplot(aes(x = mu_corrected, y = es_funnel_corrected_biased)) +
+  geom_point(
+    alpha = .05
+  ) +
+  geom_smooth(method='lm', se=FALSE, color = 'coral',linewidth=5,lineend='round') +
+  geom_abline(
+    slope = 1,
+    intercept = 0,
+    linetype = 'dashed'
+  ) + 
+  coord_equal() +
+  ylab("Funnel-corrected ES (sign aligned)") +
+  xlab("True ES (sign corrected)") +
+  ylim(
+    range(sim_funnel_correction[,c("es_funnel_corrected","es_funnel_corrected_biased")])
+  ) +
+  theme_minimal() -> gg_funnel_cor2
+
+gg_funnel_cor1 + gg_funnel_cor2 + plot_annotation(tag_levels = 'A')
+
+```
+
+We can also assess the bias over all simulations in the $x$-intercept as an estimate of the true effect size. Figure \@ref(fig:correctionbiased2)A shows the relationship between the true effect size and error in the meta-regression estimate of the effect size for the unaligned results. For the range of true effect sizes, the meta-regression estimate appears to be unbiased (though quite variable, because we only used three studies).
+
+The same is not true of the sign-aligned estimates. After sign-correcting the true effect sizes (i.e. when the sign is flipped, we account for the fact that we are estimating $-\mu$), the sign-corrected estimates are not only biased on average, as shown in Figure \@ref(fig:funnelbiased2)B; Figure \@ref(fig:correctionbiased2)B shows that bias appears to be an increasing function of the true effect size.
+
+```{r correctionbiased2,fig.cap="Error in the meta-regression estimate of the effect size in the simulations (intercept of the regression of effect size onto standard error, minus the true effect size) as a function of true effet size in non-sign-aligned simulations (A) and sign-aligned simulations (B). In B, the true effect size is corrected when the sign of the initial study was flipped (i.e. the true effect size is $-\\mu$ in these cases)."}
+
+sim_funnel_correction |>
+  mutate(correction_bias = es_funnel_corrected - mu) |>
+  ggplot(aes(x = mu, y = correction_bias)) +
+  geom_point(alpha = .05) +
+  geom_smooth(method='lm', se=FALSE,color = 'dodgerblue',linewidth=5,lineend='round') +
+  geom_hline(
+    yintercept = 0,
+    linetype = "dashed"
+  ) + 
+  ylab("Error in meta-regression estimate") +
+  xlab("True ES") +
+  ylim(c(-1.6,1.6)) +
+  theme_minimal() -> gg_funnel_cor3
+
+sim_funnel_correction |>
+  mutate(correction_bias = es_funnel_corrected_biased - mu_corrected) |>
+  ggplot(aes(x = mu_corrected, y = correction_bias)) +
+  geom_point(alpha = .05) +
+  geom_smooth(method='lm', se=FALSE,color = 'coral',linewidth=5,lineend='round') +
+  geom_hline(
+    yintercept = 0,
+    linetype = "dashed"
+  ) + 
+  ylab("Error in meta-regression estimate") +
+  xlab("True ES (sign corrected)") +
+  ylim(c(-1.6,1.6)) +
+  theme_minimal() -> gg_funnel_cor4
+
+gg_funnel_cor3 + gg_funnel_cor4 + plot_annotation(tag_levels = 'A')
+
+```
+
+Finally, I note that all of the sign-alignment bias noted above is due to the inclusion of the initial sign-aligned study in the meta-analysis itself. If we drop the initial study from the meta-analysis and consider only the first replication (for instance), the replications are unbiased estimates of the true effect size (once the true effect sizes have been suitably sign-corrected as well). 
+
+Figure \@ref(fig:replunbiased) shows the relationship between the true effect size and observed, sign-aligned replication effect size. The bias caused by the initial study and sign-alignment has disappeared. This reveals that a data-dependent reporting strategy itself is not a problem; the problem is meta-analysts assuming that the effect sizes of the initial studies can be modeled in the same way as later replications, when it fact this may not be true.
+
+```{r replunbiased, fig.cap="Relationship between the observed, sign-aligned replication effect size and the true sign-aligned effect size for all simulations. The solid blue line is the least-squares regression line; the dashed black line is the line $y=x$. The true effect size is corrected when the sign of the initial study was flipped (i.e. the true effect size is $-\\mu$ in these cases)."}
+sim |>
+  filter(i == 2) |>
+  mutate(
+    mu_corrected = sign(X)*sign(Y)*mu
+  ) |>
+  ggplot(aes(x = mu_corrected, y = Y)) +
+  geom_point(alpha = .05) +
+  geom_smooth(method = 'lm', se=FALSE) +
+  geom_abline(
+    slope = 1,
+    intercept = 0,
+    linetype = 'dashed'
+  ) +
+  xlab("True ES (sign corrected)") +
+  ylab("Replication ES (sign aligned)") +
+  coord_equal() +
+  theme_minimal()
+```

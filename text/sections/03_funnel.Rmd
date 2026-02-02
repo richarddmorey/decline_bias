@@ -1,0 +1,254 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+Unlike in decline effect analysis, meta-analysts do not generally use coining. Coining is used across research context to align all the effect sizes; funnel plots and related tests (e.g. Egger's regression test and the precision-effect test, PET) are about looking at a single research context, so explicit sign alignment is not necessary. However, as I point out, sign-alignment can also be done by the original authors as a data-dependent reporting practice. It turns out that sign alignment will bias also funnel plots and the related tests. 
+
+```{r}
+mu = .2
+std_err1 = .2
+rep_N_mult = 4
+```
+
+To show why sign alignment introduces bias into funnel plots, consider a simple situation in which we perform an initial experiment and a replication. Both experiments have the same true effect size ($\mu=`r mu`$). The initial experiment has a standard error of `r std_err1` for estimating $\mu$, while the replication has `r rep_N_mult` times the sample size, yielding a smaller standard error of `r std_err1/sqrt(rep_N_mult)`. The initial experiment has a `r round(pnorm(0,mu,std_err1)*100)`% of being observed in the wrong direction. 
+
+Consider what happens without sign alignment, but *conditional* on the sign of the initial experiment. Figure \@ref(fig:funnelbiasexpl)A depicts the situation graphically. Each experiment/sign possibility is shown as a distribution. The points show the expectation of the observed effect size conditional on the sign of the initial experiment. The sizes of the distributions and points are proportional to the probability of that outcome.
+
+Conditional on a positive initial outcome, the initial effect size is slightly overestimated on average. This is exactly counteracted by the underestimation when the initial outcome is negative, weighted by the lower probability of the negative outcome. With no sign alignment, the sign of the initial experiment has no effect on how the replication is reported, hence both replications have the same conditional mean: exactly $\mu$. 
+
+Drawing the conditional meta-regression lines (dotted) up to the $y=0$, we can see that the two lines are biased in opposite directions. When the initial effect is positive, the slope is slightly negative; when the initial effect is negative, the slope is strongly positive. The *average* meta-regression line, however (solid, thick blue line), is exactly vertical and intersects with the $x$-axis at exactly $x=\mu$. This is the expected behaviour for a funnel plot.
+
+Figure \@ref(fig:funnelbiasexpl)B shows the situation with sign alignment. Sign alignment does two things: when the initial experiment has a negative sign, it is flipped to be positive; second, replication outcome signs are also flipped to be consistent this interpretation. When the observed effect in the initial experiment is in the correct direction---positive---nothing changes: the conditional meta-regression line is the same. But when the initial experiment has a negative outcome, the sign alignment flips the conditional meta-regression line across $y=0$. 
+
+Both conditional regression lines point in the same direction and they cannot balance one another out. The average meta-regression line (solid, thick red line) has an $x$-intercept that does not correspond to the true effect size. Moreoever, on average it has a negative slope, which is supposed to be a signature of poor scientific behavior. 
+
+As the number of studies in the set increases, the bias in the intercept does not disappear, though the bias in the slope tends to 0 if there is no publication bias.
+The source of the bias is the sign alignment of the initial study, and hence all subsequent studies will be affected in the same way. As with the bias in decline effects, the bias in funnel plots due to sign alignment decreases for larger effect sizes because the probability of an initial sign flip gets smaller; see proof in Appendix.
+
+```{r}
+expand.grid(
+  mu = mu,
+  i = 1:2,
+  pos = c(TRUE,FALSE)
+) |>
+  mutate(
+    std_err = if_else(
+      i == 1,
+      std_err1,
+      std_err1 / sqrt(rep_N_mult)
+    ),
+    prob = mapply(FUN = \(m,s,p) pnorm(0, m, s, lower.tail = !p), 
+                  m = mu, s = std_err1, p = pos),
+    cond_mu = mapply(FUN = \(m,s,p) E_tnorm_pos((p*2-1)*m,s), 
+                  m = mu, s = std_err, p = pos),
+    cond_std_err = mapply(FUN = \(m,s,p) sqrt(V_tnorm_pos((p*2-1)*m,s)), 
+                  m = mu, s = std_err, p = pos),
+    cond_mu = if_else(i == 1, cond_mu, (pos*2-1)*mu),
+    cond_std_err = if_else(i == 1, cond_std_err, std_err),
+  ) -> funnel_expl_setup
+
+funnel_expl_setup %>%
+  split(.$pos) |>
+  purrr::map_df(\(df){
+    cf = lm(I(-std_err)~cond_mu, data = df) |> coef()
+    tibble(
+      pos = as.logical(df$pos[1]),
+      prob = df$prob[1],
+      intercept = unname(cf[1]),
+      slope = unname(cf[2]), 
+      xintercept = -cf[1]/cf[2] 
+    )
+  }) -> cond_lines
+
+cond_lines |>
+  summarise(
+    slope = 1/sum(prob * 1/slope),
+    xintercept = sum(prob * xintercept)
+  ) |>
+  mutate(
+     intercept = -slope*xintercept 
+  ) -> avg_lines
+
+scale_norm_dens = .005
+
+funnel_expl_setup |>
+  group_by(pos,i) |>
+  mutate(
+    x = list(seq(-3,3,length.out=1024)*std_err + cond_mu)
+  ) |>
+  tidyr::unnest(x) |>
+  mutate(
+    y0 = case_when(
+      i == 1 & pos ~ dtnorm_pos(x, mu, std_err),
+      i == 1 & !pos ~ dtnorm_pos(x, -mu, std_err),
+      i == 2 & pos ~ dnorm(x, mu, std_err),
+      i == 2 & !pos ~ dnorm(x, -mu, std_err),
+      TRUE ~ NA
+    ),
+    ymax = -(std_err + y0*scale_norm_dens*prob),
+    ymin = -(std_err - y0*scale_norm_dens*prob)
+  ) |>
+  filter(
+    i != 1 | x>0
+  ) -> ribbon_df
+```
+
+```{r}
+funnel_expl_setup |>
+  mutate(
+    cond_mu = if_else(!pos, -cond_mu,cond_mu)
+  ) -> funnel_expl_setup_unbiased 
+
+funnel_expl_setup_unbiased %>%
+  split(.$pos) |>
+  purrr::map_df(\(df){
+    cf = lm(I(-std_err)~cond_mu, data = df) |> coef()
+    tibble(
+      pos = as.logical(df$pos[1]),
+      prob = df$prob[1],
+      intercept = unname(cf[1]),
+      slope = unname(cf[2]), 
+      xintercept = -cf[1]/cf[2] 
+    )
+  }) -> cond_lines_unbiased
+
+funnel_expl_setup_unbiased |>
+  group_by(pos,i) |>
+  mutate(
+    x = list(seq(-3,3,length.out=1024)*std_err + cond_mu)
+  ) |>
+  tidyr::unnest(x) |>
+  mutate(
+    y0 = dnorm(x, mu, std_err) * if_else(i==2, prob, 1),
+    ymax = -(std_err + y0*scale_norm_dens),
+    ymin = -(std_err - y0*scale_norm_dens)
+  ) |>
+  filter(
+    i != 1 | (x>0 & pos) | (x<0 & !pos)
+  ) -> ribbon_df_unbiased
+```
+
+
+```{r}
+funnel_expl_setup_unbiased |>
+  ggplot(aes(x = cond_mu, y = -std_err, color = pos)) +
+  geom_abline(
+    data = cond_lines_unbiased, 
+    aes(slope=slope, intercept = intercept, color=pos),
+    linetype = 'dotted'
+  ) +
+  geom_ribbon(
+    data = ribbon_df_unbiased,
+    aes(x = x,ymin=ymin,ymax=ymax,group=paste(i,pos),fill=pos),
+    color = NA,
+    alpha = .3
+  ) +
+  geom_point(aes(size = prob), alpha = .6) +
+  geom_vline(
+    xintercept = 0, linetype = 'dashed'
+  ) +
+  scale_color_manual(
+    values = c("darkgreen","purple")
+  ) +
+  scale_fill_manual(
+    values = c("darkgreen","purple")
+  ) +
+  geom_vline(
+    xintercept = mu,
+    linewidth = 5,
+    alpha = .5,
+    color = "dodgerblue"
+  ) +
+  scale_size_area(guide='none') +
+  scale_y_continuous(
+    name = "Standard error",
+    limits = c(-std_err1-.02, 0),
+    expand = c(0,0),
+    labels = c(
+      formatC( -seq(-.2,-.05,.05), format='f', digits=2 ),
+      "   0"
+    ),
+    breaks = seq(-.2,0,.05)
+  ) +
+  scale_x_continuous(
+    name = "Observed effect",
+    #limits = c(-.5,.5),
+    sec.axis = sec_axis(transform = "identity")
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = 'none'
+  ) +
+  annotate(
+    "text",
+    label = c("X[1]","X[2]"),
+    x = Inf, hjust= 1.1, vjust = -.1, y = unique(-funnel_expl_setup$std_err),
+    parse=TRUE
+  ) -> gg_expl_funnel1_unbiased
+  
+```
+
+```{r}
+funnel_expl_setup |>
+  ggplot(aes(x = cond_mu, y = -std_err, color = pos)) +
+  geom_abline(
+    data = cond_lines, 
+    aes(slope=slope, intercept = intercept, color=pos),
+    linetype = 'dotted'
+  ) +
+  geom_ribbon(
+    data = ribbon_df,
+    aes(x = x,ymin=ymin,ymax=ymax,group=paste(i,pos),fill=pos),
+    color = NA,
+    alpha = .3
+  ) +
+  geom_point(aes(size = prob), alpha = .6) +
+  geom_vline(
+    xintercept = 0, linetype = 'dashed'
+  ) +
+  scale_color_manual(
+    values = c("darkgreen","purple")
+  ) +
+  scale_fill_manual(
+    values = c("darkgreen","purple")
+  ) +
+  geom_abline(
+    slope = avg_lines$slope, intercept = avg_lines$intercept,
+    linewidth = 5,
+    alpha = .5,
+    color = "coral"
+  ) +
+  scale_size_area(guide='none') +
+  scale_y_continuous(
+    name = "Standard error",
+    limits = c(-std_err1-.02, 0),
+    expand = c(0,0),
+    labels = c(
+      formatC( -seq(-.2,-.05,.05), format='f', digits=2 ),
+      "   0"
+    ),
+    breaks = seq(-.2,0,.05)
+  ) +
+  scale_x_continuous(
+    name = "Observed effect (sign aligned)",
+    #limits = c(-.5,.5),
+    sec.axis = sec_axis(transform = "identity")
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = 'none'
+  ) +
+  annotate(
+    "text",
+    label = c("Y[1]","Y[2]"),
+    x = Inf, hjust= 1.1, vjust = -.1, y = unique(-funnel_expl_setup$std_err),
+    parse=TRUE
+  ) -> gg_expl_funnel1
+  
+```
+
+```{r funnelbiasexpl,fig.cap="Demonstration of the source of sign-alignment bias in funnel plots. See text for explanation."}
+gg_expl_funnel1_unbiased + gg_expl_funnel1 + plot_annotation(tag_levels = "A")
+```

@@ -1,0 +1,103 @@
+
+## Proofs
+
+### Bias in decline effect
+
+Let $X_1$ and $X_2$ be two independent random variables; the mean and variance of $X_1$ will be denoted $\mu_1$ and $\sigma^2_1$, and likewise for $X_2$. $X_1$ and $X_2$ are assumed to be effect size estimates from initial and a replication experiment.
+
+Let $s(x)$ denote the sign function $sgn\,x$. Then the decline effect is a random variable $D_s$ defined as:
+
+\[
+D_s = s(X_1)X_2 - s(X_1)X_2
+\]
+
+Let $s_1$ be $E[s(X_1)]=2p-1$ where $p=Pr(X_1>0)$. The expectation of $D_s$ is
+
+\begin{eqnarray*}
+E\left[D_s\right] &=& E\left[s(X_1)X_1 - s(X_1)X_2\right] \\
+&=& E\left[s(X_1)X_1\right] - E\left[s(X_1)X_2\right] \\
+&=& E\left[s(X_1)X_1\right] - s_1\mu_2 \\
+&=& COV\left[s(X_1),X_1\right] + s_1\mu_1 - s_1\mu_2 \\
+&=& COV\left[s(X_1),X_1\right] + s_1(\mu_1 - \mu_2) \\
+\end{eqnarray*}
+
+Under the assumption of no decline effect ($\mu_1 - \mu_2 = 0$), $E\left[D_s\right] = COV\left[s(X_1),X_1\right]$.[^indep] Of course, $s(X_1)$ and $X_1$ will be positively correlated, so the decline effect estimate will be biased, in general (for all $SE<\infty$).
+
+[^indep]: If one is unwilling to assume independence of $X_1$ and $X_2$ (e.g. if $X_2$ is a meta-analytic effect estimate including $X_1$), the bias when there is truly no decline effect will be $COV\left[s(X_1),X_1\right] - COV\left[s(X_1),X_2\right]$. The first term will dominate when $X_1$ is a small component of $X_2$.
+
+When there *is* a difference between $\mu_1$ and $\mu_2$, and assuming $X_1$ has a normal distribution (so $s_1=2\Phi(-\mu_1)-1$ where $\Phi$ is the CDF of the normal distribution), the bias in the estimate of the difference $D_s$ relative to $\mu_1 - \mu_2$ will be
+
+\[
+COV\left[s(X_1),X_1\right] - 2(\mu_1 - \mu_2)\Phi(\mu_1) 
+\]
+
+However, one may object to this definition of "bias" when $\mu_1\neq\mu_2$ because it does not capture the logic of "attenuation" (that is, if both effect sizes are negative when $\mu_1-\mu_2$ is positive it does not represent an attenuation; it is an increase).
+ 
+Another option that better captures attenuation might be; e.g.,
+
+\[
+d_a = |X_1| - |X_2|
+\]
+
+as a measure of decline. However, this estimator, too, will suffer from bias because $E(|X|)>|E(X)|$ when $X$ can be negative and there is variability in $X$. The more variability, the greater bias; hence, if $X_2$ is a more precise estimator than $X_1$---which would often be the case if $X_2$ arises from a replication or a meta-analysis---the decline effect will again be overestimated, and will not be 0 when the true decline effect is 0. One may also object to this definition of decline because extreme sign differences may not be picked up as problematic (i.e. from -1 to 1 is a large change, but the "decline" as the difference in absolute values is 0).
+
+Any useful definition of "decline" will likely be more complicated than simple arithmetic operations, and may depend on the scientific context.
+
+### Bias in funnel plot meta-regression
+
+Let $K\geq2$ be the total number of points in the meta-regression. We assume that the first study ($X_1$) is the one that was used for sign alignment, and our vector of observed effect sizes is
+\[
+\mathbf{Y} = [Y_1, Y_2, \ldots, Y_K]'.
+\]
+The expected value of $\mathbf{Y}$ is
+\[
+E(\mathbf{Y}) = [ E(|X_1|), (2p - 1)\mu\mathbf{1}_{K-1}']'.
+\]
+Let $e_i$ be the standard error of study $i$ and $S=\sum_i (e_i-\bar{e})^2$. Applying the least squares solution the expected slope $b_1$ and intercept $b_0$ are:
+
+\begin{eqnarray*}
+E(b_1) &=& \frac{e_1 - \bar e}{S}\left(E(|X_1|) - (2p-1)\mu\right)\\
+E(b_0) &=& q E(|X_1|) + (1 - q)(2p-1)\mu 
+\end{eqnarray*}
+where $q = 1/K - \bar{e}(e_1 - \bar{e})/S)$. If we assume normality so that
+\[
+E(|X_1|) = \frac{\exp\left\{-\mu^2/2\right\}}{\sqrt{\pi/2}} + (2p-1)\mu,
+\]
+we obtain 
+\begin{eqnarray*}
+E(b_1) &=& \frac{e_1 - \bar{e}}{S\sqrt{\pi/2}}\exp\left\{-\mu^2/2\right\}\\
+E(b_0) &=& \frac{q\exp\left\{-\mu^2/2\right\}}{\sqrt{\pi/2}} + (2p-1)\mu 
+\end{eqnarray*}
+
+It is obvious that as $\mu\rightarrow\infty$ and thus $p\rightarrow1$, $E(b_1)\rightarrow0$ and $E(b_0)-\mu\rightarrow0$. Likewise when $\mu\rightarrow-\infty$ and thus $p\rightarrow0$, $E(b_1)\rightarrow0$ and $E(b_0)-(-\mu)\rightarrow0$ (i.e., $E(b_0)$ approaches the effect size with flipped sign).
+
+Bacause $S\rightarrow\infty$ as $K\rightarrow\infty$, $E(b_1)\rightarrow0$ and $E(b_0)\rightarrow(2p-1)\mu$ also as $K\rightarrow\infty$. Thus the bias in the slope diminishes, but not the bias in the intercept. 
+
+## Simulation details
+
+Let $N_{ij}$ be the sample size per group for the $i$th study in the $j$th experimental context ($i=1$ for the initial study, $i>1$ for replications). We sampled the initial sample sizes $N_{1j}$, then based the replication sample sizes on these: 
+
+\begin{eqnarray*}
+\sqrt{N_{1j}} &\stackrel{indep.}{\sim}& \text{Uniform}(\sqrt{`r n_initial_min` - 1/2}, \sqrt{`r n_initial_max` + 1/2}),\\
+N_{ij} &=& `r n_replication_factor`N_{1j},\, i>1,
+\end{eqnarray*}
+and $N_{1j}$ was rounded to the nearest integer. The quantity $\sqrt{N_{1j}}$ was sampled from a uniform distribution so that, once squared, small sample sizes would be more common than larger ones. Replication sample sizes were assumed to be `r n_replication_factor` times larger than the initial studies, though this does not matter much because the bias in the decline effect is only a function of the initial study properties. 
+
+The standardized effect size $\mu_j$ for all studies in an experimental context was assumed to be the same: 
+\[
+\mu_j \stackrel{indep.}{\sim} \text{Normal}(`r mean_mu`, `r sd_mu`^2).
+\]
+A mean effect size of 0 was chosen to respect the symmetry in the assumption that either group could act as a reference.
+
+The effect size $X_{ij}$ before sign alignment was then sampled from a Normal with mean $\mu_j$ and standard error $\sqrt{2/N_{ij}}$:
+\[
+X_{ij} \stackrel{indep.}{\sim} \text{Normal}(\mu_j, 2/N_{ij}).
+\]
+Sign-aligned effect sizes were then computed: 
+$$
+Y_{ij} = \left\{%
+\begin{array}{ll}%
+|X_{ij}|          & i = 1\\
+X_{ij}sgn\,X_{1j} & i>1
+\end{array}\right.
+$$

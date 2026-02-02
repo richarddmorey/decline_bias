@@ -1,0 +1,12 @@
+I have shown that sign-alignment leads to analysis artifacts of the sort that one would expect under poor scientific behavior. This is clearly undesirable. "Coining" by meta-analysts and sign-alignment as a DRP are equivalent, yet I have called the DRP "innocuous". Is this contradictory? Also, how can reports by original authors that I am claiming lead to biased differences be themselves unbiased? At first glance this appears to be a paradox.
+
+The resolution of the paradox must lie in the different goals of those reporting the statistical results and those meta-analysing them. A person reporting an effect size in a novel experiment has reported the result transparently and accurately even if they preferentially report it in the positive direction. They have met the goals that someone reporting results should have.
+
+The meta-analyst, on the other hand, has a different goal: to combine results across studies to come to a well-supported conclusion. By coining---or by assuming that the results have not been sign-aligned, when in fact they have been---they have undermined that goal. Their conclusions will be biased.
+
+The mistake that the meta-analyst has made is in assuming something that is not true about the data: that sets of results can be treated as sequences of independent random variables with symmetric error. Sign-alignment, and perhaps other DRPs, violates that assumption. The results are not independent because the data from the first study was used to perform an operation on all studies.
+
+But there is a way around the bias induced by sign-alignment: the effect size in an original report must be interpreted holistically. When an author reports a result in the positive direction, one should treat this as an unsigned effect, not positive. The complete effect (with sign) is yielded by a combination of the surrounding text---what was the reference group?---and the perspective of the reader---what effect size do I want to compute? For the effect estimate to be unbiased, the perspective of the reader must be independent of the data (e.g., from a previous study, a theory, a pre-registration, or a design asymmetry). 
+
+This is the resolution of the paradox: always interpreting effect sizes in the scientific context in which they were meant to be interpreted and with a perspective. Attempts to strip away that context---as is done in many metascientific analyses---will lead to problems.
+

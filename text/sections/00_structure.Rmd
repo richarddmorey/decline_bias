@@ -1,0 +1,70 @@
+
+```{r knitr_init, include=FALSE}
+library(knitr)
+library(gt)
+library(dplyr)
+library(ggplot2)
+library(patchwork)
+library(paletteer)
+library(ggarchery)
+library(ggforce)
+
+
+conflicted::conflict_prefer_all('dplyr')
+
+here::here('R_utility/') |>
+  dir(pattern='*.R', full.names = TRUE, include.dirs = FALSE) |> 
+  purrr::walk(source)
+
+## Global options
+options(max.print="75")
+opts_chunk$set(echo=FALSE,
+	             #cache=TRUE,
+               prompt=FALSE,
+               tidy=TRUE,
+               comment=NA,
+               message=FALSE,
+               warning=FALSE,
+               results='hide',
+               out.width=".8\\textwidth",
+               out.extra="keepaspectratio"
+               )
+opts_knit$set(width=75)
+
+```
+
+# Introduction
+
+```{r child='01_introduction.Rmd'}
+```
+
+# Bias in decline effects
+
+```{r child='02_decline.Rmd'}
+```
+
+# Bias in funnel plots, Egger's tests, and PET
+
+```{r child='03_funnel.Rmd'}
+```
+
+# Simulation
+
+```{r child='04_simulation.Rmd'}
+```
+
+# A meta-analytic paradox
+
+```{r child='05_paradox.Rmd'}
+```
+
+# Discussion
+
+```{r child='06_discussion.Rmd'}
+```
+
+
+# Appendix
+
+```{r child='99_appendix.Rmd'}
+```
