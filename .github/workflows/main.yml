@@ -7,7 +7,7 @@ jobs:
       - name: Set up Git repository
         uses: actions/checkout@v2
       - name: Render document
-        uses: lucharo/rmarkdown-action@v1
+        uses: happyRip/rmarkdown-action@v1.1
         with:
           input_file: text/apa_paper/Morey2026_decline_effects.Rmd
           output_format: pdf_document 
