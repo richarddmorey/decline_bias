@@ -18,7 +18,7 @@ affiliation:
     institution   : "Cardiff University"
 
 authornote: |
-
+  All code to reproduce this paper can be found at https://github.com/richarddmorey/decline_bias.
   This draft was compiled `r format(Sys.time(),"%A %d %b %Y at %H:%M:%S %Z")`.
 
 abstract: |

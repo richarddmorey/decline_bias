@@ -20,15 +20,15 @@ I will show that such signatures can arise as an artifact of the meta-analytic s
 
 "Coining" is the practice of aligning effect sizes by their observed  for interpretability. For instance, @ioannidisWhyMostDiscovered2008 (Figure 2, p. 65) demonstrated how selection for significance can lead to a relationship between effect size and sample size. He first aligned all observed effect sizes so they were positive.
 
-Coining is also used in the study of decline effects. In this context, the sign of the effect of an initial study (the earliest one in the set, often the first to report the effect in question) is flipped to be positive, and then all subsequent studies are re-aligned to be consistent with that direction [e.g. @fanelliMetaassessmentBiasScience2017, @gongAreEffectSizes2019, @nuijtenEffectSizesPower2020, @pietschnigEffectDeclinesAre2019]. For instance, @fanelliMetaassessmentBiasScience2017 report in their methods that:
+Coining is also used in the study of decline effects. In this context, the sign of the effect of an initial study (the earliest one in the set, often the first to report the effect in question) is flipped to be positive, and then all subsequent studies are re-aligned to be consistent with that direction [e.g. @fanelliMetaassessmentBiasScience2017;@gongAreEffectSizes2019; @nuijtenEffectSizesPower2020;@pietschnigEffectDeclinesAre2019]. For instance, @fanelliMetaassessmentBiasScience2017 report in their methods that:
 
-> "Each dataset was standardized following previously established protocols (14). Moreover we inverted the sign of (i.e., multiplied by -1) all primary studies within meta-analyses whose pooled summary estimates were smaller than zero---a process known as `coining.'\%
-> " (p. 3719)
+> "Each dataset was standardized following previously established protocols (14). Moreover we inverted the sign of (i.e., multiplied by -1) all primary studies within meta-analyses whose pooled summary estimates were smaller than zero---a process known as `coining.'\phantom{}" (p. 3719)
 
 Coining appears to be standard practice in metascience, and may not be explicitly called "coining". For instance, @OpenScienceCollaboration:2015 reported that 
+
 > "To be able to compare and analyze correlations across study-pairs, the original study’s effect size was coded as positive; the replication study’s effect size was coded as negative if the replication study’s effect was opposite to that of the original study." (p. aac4716-3)
 
-\noindent and reported a "substantial decline" (p. 943) in effect sizes from original to replication [see also e.g. @camererEvaluatingReplicabilitySocial2018, @erringtonInvestigatingReplicabilityPreclinical2021].
+\noindent and reported a "substantial decline" (p. 943) in effect sizes from original to replication [see also e.g. @camererEvaluatingReplicabilitySocial2018; @erringtonInvestigatingReplicabilityPreclinical2021].
 
 In the study of decline effects, coining is used to yield an common definition of decline across studies: a "decline" is when the coined effect size becomes less positive. Otherwise, a decline of a positive effect (e.g. moving from 1 to .5) might be cancelled by decline of a negative effect (e.g. moving from -1 to -.5). Coining aligns the signs across all studies so that many research areas can be studied simultaneously, drawing far-reaching conclusions across science.
 

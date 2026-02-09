@@ -209,7 +209,8 @@
 
 \authornote{
 
-This draft was compiled Monday 02 Feb 2026 at 16:11:03 GMT.
+All code to reproduce this paper can be found at \url{https://github.com/richarddmorey/decline_bias}.
+This draft was compiled Monday 09 Feb 2026 at 11:24:40 GMT.
 
 The authors made the following contributions. Richard D. Morey: Conceptualization, Writing - Original Draft Preparation, Writing - Review \& Editing.
 
@@ -258,16 +259,19 @@ I will show that such signatures can arise as an artifact of the meta-analytic s
 
 ``Coining'' is the practice of aligning effect sizes by their observed for interpretability. For instance, Ioannidis (2008) (Figure 2, p.~65) demonstrated how selection for significance can lead to a relationship between effect size and sample size. He first aligned all observed effect sizes so they were positive.
 
-Coining is also used in the study of decline effects. In this context, the sign of the effect of an initial study (the earliest one in the set, often the first to report the effect in question) is flipped to be positive, and then all subsequent studies are re-aligned to be consistent with that direction Pietschnig et al. (2019). For instance, Fanelli et al. (2017) report in their methods that:
+Coining is also used in the study of decline effects. In this context, the sign of the effect of an initial study (the earliest one in the set, often the first to report the effect in question) is flipped to be positive, and then all subsequent studies are re-aligned to be consistent with that direction (e.g. Fanelli, Costas, \& Ioannidis, 2017; Gong \& Jiao, 2019; {Nuijten, van Assen, Augusteijn, Crompvoets, \& Wicherts}, 2020; Pietschnig et al., 2019). For instance, Fanelli et al. (2017) report in their methods that:
 
 \begin{quote}
-``Each dataset was standardized following previously established protocols (14). Moreover we inverted the sign of (i.e., multiplied by -1) all primary studies within meta-analyses whose pooled summary estimates were smaller than zero---a process known as `coining.'\%'' (p.~3719)
+``Each dataset was standardized following previously established protocols (14). Moreover we inverted the sign of (i.e., multiplied by -1) all primary studies within meta-analyses whose pooled summary estimates were smaller than zero---a process known as `coining.'\phantom{}'' (p.~3719)
 \end{quote}
 
 Coining appears to be standard practice in metascience, and may not be explicitly called ``coining''. For instance, Open Science Collaboration (2015) reported that
-\textgreater{} ``To be able to compare and analyze correlations across study-pairs, the original study's effect size was coded as positive; the replication study's effect size was coded as negative if the replication study's effect was opposite to that of the original study.'' (p.~aac4716-3)
 
-\noindent and reported a ``substantial decline'' (p.~943) in effect sizes from original to replication Errington et al. (2021).
+\begin{quote}
+``To be able to compare and analyze correlations across study-pairs, the original study's effect size was coded as positive; the replication study's effect size was coded as negative if the replication study's effect was opposite to that of the original study.'' (p.~aac4716-3)
+\end{quote}
+
+\noindent and reported a ``substantial decline'' (p.~943) in effect sizes from original to replication (see also e.g. Camerer et al., 2018; Errington et al., 2021).
 
 In the study of decline effects, coining is used to yield an common definition of decline across studies: a ``decline'' is when the coined effect size becomes less positive. Otherwise, a decline of a positive effect (e.g.~moving from 1 to .5) might be cancelled by decline of a negative effect (e.g.~moving from -1 to -.5). Coining aligns the signs across all studies so that many research areas can be studied simultaneously, drawing far-reaching conclusions across science.
 
@@ -461,11 +465,9 @@ The resolution of the paradox must lie in the different goals of those reporting
 
 The meta-analyst, on the other hand, has a different goal: to combine results across studies to come to a well-supported conclusion. By coining---or by assuming that the results have not been sign-aligned, when in fact they have been---they have undermined that goal. Their conclusions will be biased.
 
-The mistake that the meta-analyst has made is in assuming something that is not true about the data: that sets of results can be treated as sequences of independent random variables with symmetric error. Sign-alignment, and perhaps other DRPs, violates that assumption. The results are not independent because the data from the first study was used to perform an operation on all studies.
+The mistake that the meta-analyst has made is in assuming something that is not true about the data: that sets of results can be treated as sequences of independent random variables with symmetric error. Sign-alignment---and perhaps other DRPs---violates that assumption. The results are not independent because the data from the first study was used to perform an operation on all studies.
 
-But there is a way around the bias induced by sign-alignment: the effect size in an original report must be interpreted holistically. When an author reports a result in the positive direction, one should treat this as an unsigned effect, not positive. The complete effect (with sign) is yielded by a combination of the surrounding text---what was the reference group?---and the perspective of the reader---what effect size do I want to compute? For the effect estimate to be unbiased, the perspective of the reader must be independent of the data (e.g., from a previous study, a theory, a pre-registration, or a design asymmetry).
-
-This is the resolution of the paradox: always interpreting effect sizes in the scientific context in which they were meant to be interpreted and with a perspective. Attempts to strip away that context---as is done in many metascientific analyses---will lead to problems.
+But there is a way around the bias induced by sign-alignment: the effect size in an original report must be interpreted more holistically. In the notation introduced earlier, when sign alignment happens, the effect size is a actually a \emph{pair} of values \((|X_1|, a_1)\) - the first value denoting the effect size, and the second the perspective from which it is reported. An unbiased estimate of the effect size from either perspective can be obtained by aligning all effects on \(a_1\) or \(a_2\). The perspective by which one aligns must be independent of the data (e.g., from a previous study, a theory, a pre-registration, a Bayesian prior, or a design asymmetry). Without a fixed perspective, the perspective becomes random and this is where the trouble begins.
 
 \section{Discussion}\label{discussion}
 

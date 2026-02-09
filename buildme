@@ -11,6 +11,6 @@ cd ../..
 
 cd text/apa_paper/
 
-Rscript -e "rmarkdown::render('apa_paper.Rmd')" 
+Rscript -e "rmarkdown::render('Morey2026_decline_effects.Rmd')" 
 
 type afplay &> /dev/null && afplay /System/Library/Sounds/Hero.aiff || echo "Done."
